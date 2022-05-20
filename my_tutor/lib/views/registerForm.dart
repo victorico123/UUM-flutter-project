@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:my_tutor/views/loginForm.dart';
 
 class RegisterForm extends StatefulWidget {
@@ -60,7 +61,7 @@ class _RegisterFormState extends State<RegisterForm> {
       padding: EdgeInsets.symmetric(vertical: 15),
       alignment: Alignment.center,
       decoration: BoxDecoration(
-          borderRadius: BorderRadius.all(Radius.circular(5)),
+          borderRadius: BorderRadius.all(Radius.circular(10)),
           boxShadow: <BoxShadow>[
             BoxShadow(
                 color: Colors.grey.shade200,
@@ -71,43 +72,13 @@ class _RegisterFormState extends State<RegisterForm> {
           gradient: LinearGradient(
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
-              colors: [Color(0xfffbb448), Color(0xfff7892b)])),
+              colors: [
+                Color.fromARGB(255, 72, 212, 251),
+                Color.fromARGB(255, 16, 133, 228)
+              ])),
       child: Text(
         'Register Now',
         style: TextStyle(fontSize: 20, color: Colors.white),
-      ),
-    );
-  }
-
-  Widget _loginAccountLabel() {
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => LoginForm()));
-      },
-      child: Container(
-        margin: EdgeInsets.symmetric(vertical: 20),
-        padding: EdgeInsets.all(15),
-        alignment: Alignment.bottomCenter,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'Already have an account ?',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-            ),
-            SizedBox(
-              width: 10,
-            ),
-            Text(
-              'Login',
-              style: TextStyle(
-                  color: Color(0xfff79c4f),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -116,30 +87,32 @@ class _RegisterFormState extends State<RegisterForm> {
     return RichText(
       textAlign: TextAlign.center,
       text: TextSpan(
-          text: 'd',
+          text: 'My',
           style: TextStyle(
-              fontSize: 30,
+              fontSize: 40,
               fontWeight: FontWeight.w700,
-              color: Color(0xffe46b10)),
+              color: Color.fromARGB(255, 16, 133, 228)),
           children: [
             TextSpan(
-              text: 'ev',
-              style: TextStyle(color: Colors.black, fontSize: 30),
-            ),
-            TextSpan(
-              text: 'rnz',
-              style: TextStyle(color: Color(0xffe46b10), fontSize: 30),
-            ),
+                text: 'Tutor',
+                style: GoogleFonts.arizonia(
+                    textStyle: const TextStyle(
+                  fontSize: 60,
+                  fontWeight: FontWeight.bold,
+                  color: Color.fromARGB(255, 16, 133, 228),
+                )))
           ]),
     );
   }
 
-  Widget _emailPasswordWidget() {
+  Widget _formWidget() {
     return Column(
       children: <Widget>[
-        _entryField("Username"),
-        _entryField("Email id"),
+        _entryField("Email"),
+        _entryField("Name"),
+        _entryField("Phone Number"),
         _entryField("Password", isPassword: true),
+        _entryField("Home Address"),
       ],
     );
   }
@@ -152,11 +125,6 @@ class _RegisterFormState extends State<RegisterForm> {
         height: height,
         child: Stack(
           children: <Widget>[
-            Positioned(
-              top: -MediaQuery.of(context).size.height * .15,
-              right: -MediaQuery.of(context).size.width * .4,
-              child: Container(),
-            ),
             Container(
               padding: EdgeInsets.symmetric(horizontal: 20),
               child: SingleChildScrollView(
@@ -164,23 +132,22 @@ class _RegisterFormState extends State<RegisterForm> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
-                    SizedBox(height: height * .2),
+                    SizedBox(height: height * .15),
                     _title(),
                     SizedBox(
-                      height: 50,
+                      height: 40,
                     ),
-                    _emailPasswordWidget(),
+                    _formWidget(),
                     SizedBox(
                       height: 20,
                     ),
                     _submitButton(),
-                    SizedBox(height: height * .14),
-                    _loginAccountLabel(),
+                    SizedBox(height: height * .05),
                   ],
                 ),
               ),
             ),
-            Positioned(top: 40, left: 0, child: _backButton()),
+            Positioned(top: 30, left: 0, child: _backButton()),
           ],
         ),
       ),

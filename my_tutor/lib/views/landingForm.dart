@@ -1,6 +1,7 @@
 // ignore: file_names
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:my_tutor/views/loginForm.dart';
 import 'package:my_tutor/views/registerForm.dart';
 
 class LandingForm extends StatefulWidget {
@@ -14,8 +15,8 @@ class _LandingFormState extends State<LandingForm> {
   Widget _submitButton() {
     return InkWell(
       onTap: () {
-        // Navigator.push(
-        //     context, MaterialPageRoute(builder: (context) => LoginPage()));
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => LoginForm()));
       },
       child: Container(
         width: MediaQuery.of(context).size.width,
@@ -60,13 +61,25 @@ class _LandingFormState extends State<LandingForm> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text('My Tutor',
-              style: GoogleFonts.arizonia(
-                  textStyle: const TextStyle(
-                fontSize: 60,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ))),
+          RichText(
+            textAlign: TextAlign.center,
+            text: TextSpan(
+                text: 'My',
+                style: TextStyle(
+                    fontSize: 40,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white),
+                children: [
+                  TextSpan(
+                      text: 'Tutor',
+                      style: GoogleFonts.arizonia(
+                          textStyle: const TextStyle(
+                        fontSize: 60,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      )))
+                ]),
+          ),
           SizedBox(
             height: 200,
             child: Image.asset(
