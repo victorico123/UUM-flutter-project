@@ -15,8 +15,8 @@ class _LandingFormState extends State<LandingForm> {
   Widget _submitButton() {
     return InkWell(
       onTap: () {
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => LoginForm()));
+        Navigator.push(context,
+            MaterialPageRoute(builder: (context) => const LoginForm()));
       },
       child: Container(
         width: MediaQuery.of(context).size.width,
@@ -37,8 +37,8 @@ class _LandingFormState extends State<LandingForm> {
   Widget _signUpButton() {
     return InkWell(
       onTap: () {
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => RegisterForm()));
+        Navigator.push(context,
+            MaterialPageRoute(builder: (context) => const RegisterForm()));
       },
       child: Container(
         width: MediaQuery.of(context).size.width,
@@ -65,7 +65,7 @@ class _LandingFormState extends State<LandingForm> {
             textAlign: TextAlign.center,
             text: TextSpan(
                 text: 'My',
-                style: TextStyle(
+                style: const TextStyle(
                     fontSize: 40,
                     fontWeight: FontWeight.w700,
                     color: Colors.white),

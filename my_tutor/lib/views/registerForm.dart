@@ -1,29 +1,44 @@
+// ignore_for_file: prefer_final_fields
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:my_tutor/views/loginForm.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:path/path.dart' as p;
+import 'dart:io';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class RegisterForm extends StatefulWidget {
-  RegisterForm({Key? key}) : super(key: key);
+  const RegisterForm({Key? key}) : super(key: key);
 
   @override
   State<RegisterForm> createState() => _RegisterFormState();
 }
 
 class _RegisterFormState extends State<RegisterForm> {
+  TextEditingController _emailController = TextEditingController();
+  TextEditingController _nameController = TextEditingController();
+  TextEditingController _phoneController = TextEditingController();
+  TextEditingController _passwordController = TextEditingController();
+  TextEditingController _addressController = TextEditingController();
+  // ignore: prefer_typing_uninitialized_variables
+  var _image, _imageExt;
+  final _formKey = GlobalKey<FormState>();
   Widget _backButton() {
     return InkWell(
       onTap: () {
         Navigator.pop(context);
       },
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 10),
         child: Row(
           children: <Widget>[
             Container(
-              padding: EdgeInsets.only(left: 0, top: 10, bottom: 10),
-              child: Icon(Icons.keyboard_arrow_left, color: Colors.black),
+              padding: const EdgeInsets.only(left: 0, top: 10, bottom: 10),
+              child: const Icon(Icons.keyboard_arrow_left, color: Colors.black),
             ),
-            Text('Back',
+            const Text('Back',
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500))
           ],
         ),
@@ -31,54 +46,69 @@ class _RegisterFormState extends State<RegisterForm> {
     );
   }
 
-  Widget _entryField(String title, {bool isPassword = false}) {
+  Widget _entryField(String title, TextEditingController myContoller,
+      {bool isPassword = false}) {
     return Container(
-      margin: EdgeInsets.symmetric(vertical: 10),
+      margin: const EdgeInsets.symmetric(vertical: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
             title,
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
           ),
-          SizedBox(
+          const SizedBox(
             height: 10,
           ),
-          TextField(
-              obscureText: isPassword,
-              decoration: InputDecoration(
-                  border: InputBorder.none,
-                  fillColor: Color(0xfff3f3f4),
-                  filled: true))
+          TextFormField(
+            controller: myContoller,
+            obscureText: isPassword,
+            keyboardType: title == "Phone Number"
+                ? TextInputType.number
+                : TextInputType.multiline,
+            decoration: const InputDecoration(
+                border: InputBorder.none,
+                fillColor: Color(0xfff3f3f4),
+                filled: true),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter ' + title + ' field.';
+              }
+              return null;
+            },
+          )
         ],
       ),
     );
   }
 
   Widget _submitButton() {
-    return Container(
-      width: MediaQuery.of(context).size.width,
-      padding: EdgeInsets.symmetric(vertical: 15),
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-          borderRadius: BorderRadius.all(Radius.circular(10)),
-          boxShadow: <BoxShadow>[
-            BoxShadow(
-                color: Colors.grey.shade200,
-                offset: Offset(2, 4),
-                blurRadius: 5,
-                spreadRadius: 2)
-          ],
-          gradient: LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-              colors: [
-                Color.fromARGB(255, 72, 212, 251),
-                Color.fromARGB(255, 16, 133, 228)
-              ])),
-      child: Text(
-        'Register Now',
-        style: TextStyle(fontSize: 20, color: Colors.white),
+    return GestureDetector(
+      onTap: () => {_onSubmit()},
+      child: Container(
+        width: MediaQuery.of(context).size.width,
+        padding: const EdgeInsets.symmetric(vertical: 15),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+            borderRadius: const BorderRadius.all(Radius.circular(10)),
+            boxShadow: <BoxShadow>[
+              BoxShadow(
+                  color: Colors.grey.shade200,
+                  offset: const Offset(2, 4),
+                  blurRadius: 5,
+                  spreadRadius: 2)
+            ],
+            gradient: const LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [
+                  Color.fromARGB(255, 72, 212, 251),
+                  Color.fromARGB(255, 16, 133, 228)
+                ])),
+        child: const Text(
+          'Register Now',
+          style: TextStyle(fontSize: 20, color: Colors.white),
+        ),
       ),
     );
   }
@@ -88,7 +118,7 @@ class _RegisterFormState extends State<RegisterForm> {
       textAlign: TextAlign.center,
       text: TextSpan(
           text: 'My',
-          style: TextStyle(
+          style: const TextStyle(
               fontSize: 40,
               fontWeight: FontWeight.w700,
               color: Color.fromARGB(255, 16, 133, 228)),
@@ -105,28 +135,120 @@ class _RegisterFormState extends State<RegisterForm> {
     );
   }
 
-  Widget _formWidget() {
-    return Column(
-      children: <Widget>[
-        _entryField("Email"),
-        _entryField("Name"),
-        _entryField("Phone Number"),
-        _entryField("Password", isPassword: true),
-        _entryField("Home Address"),
+  Widget _uploadPictureWidget() {
+    return Center(
+        child: Column(
+      children: [
+        const Text(
+          "Profile Picture",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+        ),
+        const SizedBox(
+          height: 20,
+        ),
+        _image == null
+            ? const Text("Pick Image for Profile Picture",
+                style: TextStyle(color: Colors.red))
+            : Image.file(_image),
+        const SizedBox(
+          height: 20,
+        ),
+        FloatingActionButton(
+            onPressed: _galleryPicker,
+            tooltip: "Pick Image for Profile Picture",
+            child: const Icon(Icons.photo_camera_back))
       ],
+    ));
+  }
+
+  _galleryPicker() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxHeight: 200,
+      maxWidth: 200,
     );
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path);
+        _imageExt = p.extension(pickedFile.path);
+      });
+    }
+  }
+
+  Widget _formWidget() {
+    return Form(
+      key: _formKey,
+      child: Column(
+        children: <Widget>[
+          _entryField("Email", _emailController),
+          _entryField("Name", _nameController),
+          _entryField("Phone Number", _phoneController),
+          _entryField("Password", _passwordController, isPassword: true),
+          _entryField("Home Address", _addressController),
+        ],
+      ),
+    );
+  }
+
+  _onSubmit() {
+    if (_formKey.currentState!.validate() && _image != null) {
+      _formKey.currentState!.save();
+      print("OKE BOS!");
+      _insertUser();
+    }
+    print("GAK BOS!");
+  }
+
+  void _insertUser() {
+    print("1");
+    String _email = _emailController.text;
+    String _name = _nameController.text;
+    String _phone = _phoneController.text;
+    String _password = _passwordController.text;
+    String _address = _addressController.text;
+    String base64Image = base64Encode(_image!.readAsBytesSync());
+    print("2");
+    http.post(Uri.parse("http://10.19.105.124/myTutorAPI/register.php"), body: {
+      "email": _email,
+      "name": _name,
+      "phone": _phone,
+      "password": _password,
+      "address": _address,
+      "image": base64Image,
+      "imageExt": _imageExt,
+    }).then((response) {
+      print(response.body);
+      var data = jsonDecode(response.body);
+      if (response.statusCode == 200 && data['status'] == 'success') {
+        Fluttertoast.showToast(
+            msg: "Success",
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            timeInSecForIosWeb: 1,
+            fontSize: 16.0);
+        Navigator.of(context).pop();
+      } else {
+        Fluttertoast.showToast(
+            msg: data['status'],
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            timeInSecForIosWeb: 1,
+            fontSize: 16.0);
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
     return Scaffold(
-      body: Container(
+      body: SizedBox(
         height: height,
         child: Stack(
           children: <Widget>[
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -134,11 +256,15 @@ class _RegisterFormState extends State<RegisterForm> {
                   children: <Widget>[
                     SizedBox(height: height * .15),
                     _title(),
-                    SizedBox(
+                    const SizedBox(
                       height: 40,
                     ),
                     _formWidget(),
-                    SizedBox(
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    _uploadPictureWidget(),
+                    const SizedBox(
                       height: 20,
                     ),
                     _submitButton(),
