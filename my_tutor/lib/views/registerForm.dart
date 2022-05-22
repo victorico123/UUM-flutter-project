@@ -194,21 +194,17 @@ class _RegisterFormState extends State<RegisterForm> {
   _onSubmit() {
     if (_formKey.currentState!.validate() && _image != null) {
       _formKey.currentState!.save();
-      print("OKE BOS!");
       _insertUser();
     }
-    print("GAK BOS!");
   }
 
   void _insertUser() {
-    print("1");
     String _email = _emailController.text;
     String _name = _nameController.text;
     String _phone = _phoneController.text;
     String _password = _passwordController.text;
     String _address = _addressController.text;
     String base64Image = base64Encode(_image!.readAsBytesSync());
-    print("2");
     http.post(Uri.parse("http://10.19.105.124/myTutorAPI/register.php"), body: {
       "email": _email,
       "name": _name,
@@ -218,7 +214,6 @@ class _RegisterFormState extends State<RegisterForm> {
       "image": base64Image,
       "imageExt": _imageExt,
     }).then((response) {
-      print(response.body);
       var data = jsonDecode(response.body);
       if (response.statusCode == 200 && data['status'] == 'success') {
         Fluttertoast.showToast(
