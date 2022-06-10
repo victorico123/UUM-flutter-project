@@ -20,18 +20,9 @@ $sqlinsert = "INSERT INTO `users`(`email`, `name`, `phone`, `password`,
 `address`,`image`) VALUES ('$email','$name','$phone','$password','$address','$filePath')";
 if ($conn->query($sqlinsert) === TRUE) {
     $response = array('status' => 'success', 'data' => null);
-    sendJsonResponse($response);
 } else {
     $response = array('status' => 'failed', 'data' => null);
-    sendJsonResponse($response);
 }
-
-function sendJsonResponse($sentArray)
-{
-    header('Content-Type: application/json');
-    echo json_encode($sentArray);
-}
-
 function getRandomString() {
     $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
     $randomString = '';
@@ -42,5 +33,9 @@ function getRandomString() {
     }
   
     return $randomString;
+}function sendJsonResponse($sentArray)
+{
+    header('Content-Type: application/json');
+    echo json_encode($sentArray);
 }
 ?>

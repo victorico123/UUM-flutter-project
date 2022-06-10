@@ -1,5 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:http/http.dart' as http;
+import 'package:my_tutor/model/user.dart';
+import 'dart:convert';
+import 'package:my_tutor/global.dart' as gb;
+
+import 'package:my_tutor/views/HomeScreen.dart';
 
 class LoginForm extends StatefulWidget {
   const LoginForm({Key? key}) : super(key: key);
@@ -9,6 +17,20 @@ class LoginForm extends StatefulWidget {
 }
 
 class _LoginFormState extends State<LoginForm> {
+  final TextEditingController _emailController =
+      TextEditingController(text: "");
+  final TextEditingController _passwordController =
+      TextEditingController(text: "");
+  bool _isCheckedSavePassword = false;
+  final _formKey = GlobalKey<FormState>();
+  final _storage = const FlutterSecureStorage();
+
+  @override
+  void initState() {
+    super.initState();
+    readFromStorage();
+  }
+
   Widget _backButton() {
     return InkWell(
       onTap: () {
@@ -30,7 +52,8 @@ class _LoginFormState extends State<LoginForm> {
     );
   }
 
-  Widget _entryField(String title, {bool isPassword = false}) {
+  Widget _entryField(String title, TextEditingController myContoller,
+      {bool isPassword = false}) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 10),
       child: Column(
@@ -43,35 +66,145 @@ class _LoginFormState extends State<LoginForm> {
           const SizedBox(
             height: 10,
           ),
-          TextField(
-              obscureText: isPassword,
-              decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  fillColor: Color(0xfff3f3f4),
-                  filled: true))
+          TextFormField(
+            controller: myContoller,
+            obscureText: isPassword,
+            keyboardType: TextInputType.multiline,
+            decoration: const InputDecoration(
+                border: InputBorder.none,
+                fillColor: Color(0xfff3f3f4),
+                filled: true),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter ' + title + ' field.';
+              }
+              return null;
+            },
+          )
         ],
       ),
     );
   }
 
+  Widget _remmberWidget() {
+    return Row(
+      children: [
+        Checkbox(
+          activeColor: const Color(0xff00C8E8),
+          value: _isCheckedSavePassword,
+          onChanged: (bool? value) {
+            _onRememberMeChanged(value!);
+          },
+        ),
+        const Text("Remember Me",
+            style: TextStyle(
+              color: Color(0xff646464),
+              fontSize: 12,
+            ))
+      ],
+    );
+  }
+
+  void _onRememberMeChanged(bool value) {
+    _isCheckedSavePassword = value;
+    setState(() {
+      if (_isCheckedSavePassword) {
+        _saveRemoveCreds(true);
+      } else {
+        _saveRemoveCreds(false);
+      }
+    });
+  }
+
+  void _saveRemoveCreds(bool value) async {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      String email = _emailController.text;
+      String password = _passwordController.text;
+      if (value) {
+        await _storage.write(key: "KEY_EMAIL", value: email);
+        await _storage.write(key: "KEY_PASSWORD", value: password);
+      } else {
+        await _storage.write(key: "KEY_EMAIL", value: '');
+        await _storage.write(key: "KEY_PASSWORD", value: '');
+      }
+    } else {
+      Fluttertoast.showToast(
+          msg: "Failed to Remember Me",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          fontSize: 14.0);
+      _isCheckedSavePassword = false;
+    }
+  }
+
+  Future<void> readFromStorage() async {
+    var email = await _storage.read(key: "KEY_EMAIL") ?? '';
+    var pass = await _storage.read(key: "KEY_PASSWORD") ?? '';
+    if (email != '') {
+      setState(() {
+        _emailController.text = email;
+        _passwordController.text = pass;
+        _isCheckedSavePassword = true;
+      });
+    }
+  }
+
+  void _validateUser() {
+    String email = _emailController.text;
+    String password = _passwordController.text;
+    http.post(Uri.parse("http://10.19.48.148/myTutorAPI/login.php"),
+        body: {"email": email, "password": password}).then((response) {
+      var data = jsonDecode(response.body);
+      if (response.statusCode == 200 && data['status'] == 'success') {
+        gb.globaUser = User.fromJson(data['data']);
+        Fluttertoast.showToast(
+            msg: "Success",
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            timeInSecForIosWeb: 1,
+            fontSize: 16.0);
+        Navigator.of(context)
+            .push(MaterialPageRoute(builder: (context) => HomeScreen()));
+      } else {
+        Fluttertoast.showToast(
+            msg: data['status'],
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            timeInSecForIosWeb: 1,
+            fontSize: 16.0);
+      }
+    });
+  }
+
+  void _onSubmit() {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      _validateUser();
+    }
+  }
+
   Widget _submitButton() {
-    return Container(
-      width: MediaQuery.of(context).size.width,
-      padding: const EdgeInsets.symmetric(vertical: 15),
-      alignment: Alignment.center,
-      decoration: const BoxDecoration(
-          borderRadius: BorderRadius.all(Radius.circular(10)),
-          gradient: LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-              colors: [
-                Color.fromARGB(255, 72, 212, 251),
-                Color.fromARGB(255, 16, 133, 228)
-              ])),
-      child: const Text(
-        'Login',
-        style: TextStyle(fontSize: 20, color: Colors.white),
-      ),
+    return GestureDetector(
+      onTap: () => _onSubmit(),
+      child: Container(
+          width: MediaQuery.of(context).size.width,
+          padding: const EdgeInsets.symmetric(vertical: 15),
+          alignment: Alignment.center,
+          decoration: const BoxDecoration(
+              borderRadius: BorderRadius.all(Radius.circular(10)),
+              gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [
+                    Color.fromARGB(255, 72, 212, 251),
+                    Color.fromARGB(255, 16, 133, 228)
+                  ])),
+          child: const Text(
+            'Login',
+            style: TextStyle(fontSize: 20, color: Colors.white),
+          )),
     );
   }
 
@@ -98,11 +231,15 @@ class _LoginFormState extends State<LoginForm> {
   }
 
   Widget _formWidget() {
-    return Column(
-      children: <Widget>[
-        _entryField("Email id"),
-        _entryField("Password", isPassword: true),
-      ],
+    return Form(
+      key: _formKey,
+      child: Column(
+        children: <Widget>[
+          _entryField("Email", _emailController),
+          _entryField("Password", _passwordController, isPassword: true),
+          _remmberWidget(),
+        ],
+      ),
     );
   }
 
@@ -125,15 +262,15 @@ class _LoginFormState extends State<LoginForm> {
                   _title(),
                   const SizedBox(height: 40),
                   _formWidget(),
+                  // Container(
+                  //   padding: const EdgeInsets.symmetric(vertical: 10),
+                  //   alignment: Alignment.centerRight,
+                  //   child: const Text('Forgot Password ?',
+                  //       style: TextStyle(
+                  //           fontSize: 14, fontWeight: FontWeight.w500)),
+                  // ),
                   const SizedBox(height: 20),
                   _submitButton(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    alignment: Alignment.centerRight,
-                    child: const Text('Forgot Password ?',
-                        style: TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w500)),
-                  ),
                 ],
               ),
             ),

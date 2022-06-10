@@ -205,7 +205,7 @@ class _RegisterFormState extends State<RegisterForm> {
     String _password = _passwordController.text;
     String _address = _addressController.text;
     String base64Image = base64Encode(_image!.readAsBytesSync());
-    http.post(Uri.parse("http://10.19.105.124/myTutorAPI/register.php"), body: {
+    http.post(Uri.parse("http://10.19.48.148/myTutorAPI/register.php"), body: {
       "email": _email,
       "name": _name,
       "phone": _phone,
