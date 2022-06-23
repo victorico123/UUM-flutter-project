@@ -19,8 +19,10 @@ class CoursePage extends StatefulWidget {
 class _CoursePageState extends State<CoursePage> {
   List<Course> CourseList = <Course>[];
   List<Tutor> TutorList = <Tutor>[];
-  var _numPages, _currentPage = 1;
+  var _numPages, _totalData = 0, _currentPage = 1;
   var titlecenter = "";
+  String searchedQuery = "";
+  TextEditingController _searchController = new TextEditingController(text: "");
   @override
   void initState() {
     super.initState();
@@ -189,6 +191,7 @@ class _CoursePageState extends State<CoursePage> {
     http.post(Uri.parse("http://10.19.48.148/myTutorAPI/load_subject.php"),
         body: {
           'page': _currentPage.toString(),
+          'search': searchedQuery,
         }).timeout(
       const Duration(seconds: 5),
       onTimeout: () {
@@ -196,24 +199,28 @@ class _CoursePageState extends State<CoursePage> {
             'Error', 408); // Request Timeout response status code
       },
     ).then((response) {
+      print(response.body);
       var jsondata = jsonDecode(response.body);
       if (response.statusCode == 200 && jsondata['status'] == 'success') {
         var extractdata = jsondata['data'];
         _numPages = int.parse(jsondata['totalPages']);
+        _totalData = int.parse(jsondata['totalData']);
 
         if (extractdata['courses'] != null) {
           CourseList = <Course>[];
           extractdata['courses'].forEach((v) {
             CourseList.add(Course.fromJson(v));
           });
-          titlecenter = CourseList.length.toString() + " Courses Available";
+          titlecenter = "Course Available";
         } else {
-          titlecenter = "No Course Available";
+          titlecenter = "Fail to get Course";
           CourseList.clear();
+          _totalData = 0;
         }
         setState(() {});
       } else {
-        titlecenter = "No Course Available 2";
+        titlecenter = "No Course Available";
+        _totalData = 0;
         CourseList.clear();
         setState(() {});
       }
@@ -252,183 +259,270 @@ class _CoursePageState extends State<CoursePage> {
     });
   }
 
+  void _addTutorDialog() {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog();
+        });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
             title: const Text('Course'),
+            // actions: [
+            //   IconButton(
+            //     icon: const Icon(Icons.add),
+            //     onPressed: () {
+            //       setState(() {});
+            //     },
+            //   )
+            // ],
             centerTitle: true,
             automaticallyImplyLeading: false),
-        body: CourseList.isEmpty
-            ? Center(
-                child: Text(
-                titlecenter,
-                style: const TextStyle(fontSize: 60),
-              ))
-            : SingleChildScrollView(
-                physics: const ScrollPhysics(),
-                child: Column(
-                  children: <Widget>[
-                    ListView.builder(
-                      physics: const NeverScrollableScrollPhysics(),
-                      shrinkWrap: true,
-                      itemCount: CourseList.length,
-                      itemBuilder: (BuildContext context, int index) {
-                        return GestureDetector(
-                          onTap: () => {_loadCourseDetails(index)},
-                          child: SizedBox(
-                              height: 200,
-                              child: Card(
-                                margin:
-                                    const EdgeInsets.fromLTRB(15, 10, 15, 5),
-                                child: Row(
-                                  children: [
-                                    Flexible(
-                                      flex: 4,
-                                      child: Container(
-                                        margin: const EdgeInsets.fromLTRB(
-                                            0, 0, 5, 0),
-                                        child: CachedNetworkImage(
-                                          imageUrl:
-                                              "http://10.19.48.148/myTutorAPI/assets/courses/" +
-                                                  CourseList[index]
-                                                      .subject_id
-                                                      .toString() +
-                                                  '.jpg',
-                                          fit: BoxFit.cover,
-                                          placeholder: (context, url) =>
-                                              const LinearProgressIndicator(),
-                                          errorWidget: (context, url, error) =>
-                                              const Icon(Icons.error),
-                                        ),
-                                      ),
-                                    ),
-                                    Flexible(
-                                        flex: 6,
-                                        child: Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            Container(
-                                              margin: const EdgeInsets.all(5),
-                                              child: Text(
-                                                CourseList[index]
-                                                    .subject_name
-                                                    .toString(),
-                                                style: const TextStyle(
-                                                  fontSize: 20,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                                textAlign: TextAlign.center,
-                                              ),
-                                            ),
-                                            Container(
-                                              margin: const EdgeInsets.all(8),
-                                              child: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  Card(
-                                                    color: Colors.green,
-                                                    shape:
-                                                        RoundedRectangleBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              15.0),
-                                                    ),
-                                                    child: Container(
-                                                      margin:
-                                                          const EdgeInsets.all(
-                                                              8),
-                                                      child: Text(
-                                                          "RM " +
-                                                              double.parse(CourseList[
-                                                                          index]
-                                                                      .subject_price
-                                                                      .toString())
-                                                                  .toStringAsFixed(
-                                                                      2),
-                                                          style:
-                                                              const TextStyle(
-                                                            color: Colors.white,
-                                                            fontSize: 15,
-                                                          )),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(
-                                                    width: 10,
-                                                  ),
-                                                  Card(
-                                                    color: Colors.blue,
-                                                    shape:
-                                                        RoundedRectangleBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              15.0),
-                                                    ),
-                                                    child: Container(
-                                                      margin:
-                                                          const EdgeInsets.all(
-                                                              8),
-                                                      child: Text(
-                                                          CourseList[index]
-                                                                  .subject_sessions
-                                                                  .toString() +
-                                                              " session",
-                                                          style:
-                                                              const TextStyle(
-                                                            color: Colors.white,
-                                                            fontSize: 15,
-                                                          )),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            Container(
-                                                alignment: Alignment.centerLeft,
-                                                margin:
-                                                    const EdgeInsets.fromLTRB(
-                                                        20, 5, 5, 5),
-                                                child: Row(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    const Icon(Icons.star,
-                                                        color: Colors.amber),
-                                                    Text(
-                                                        CourseList[index]
-                                                            .subject_rating
-                                                            .toString(),
-                                                        style: const TextStyle(
-                                                          color: Colors.amber,
-                                                          fontSize: 16,
-                                                        )),
-                                                  ],
-                                                )),
-                                          ],
-                                        ))
-                                  ],
-                                ),
-                              )),
-                        );
-                      },
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: NumberPaginator(
-                        numberPages: _numPages ?? 1,
-                        onPageChange: (int index) {
-                          setState(() {
-                            _currentPage = index + 1;
-                            loadCourse();
-                            // loadTutor();
-                          });
-                        },
+        body: SingleChildScrollView(
+          physics: const ScrollPhysics(),
+          child: Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.fromLTRB(10, 10, 20, 10),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Flexible(
+                      flex: 9,
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(0, 0, 3, 0),
+                        child: TextField(
+                          controller: _searchController,
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(),
+                            hintText: 'Enter a search term',
+                          ),
+                        ),
                       ),
                     ),
+                    Flexible(
+                        flex: 1,
+                        child: Center(
+                            child: IconButton(
+                          icon: const Icon(Icons.search),
+                          onPressed: () {
+                            setState(() {
+                              searchedQuery = _searchController.text.toString();
+                              loadCourse();
+                              print(_searchController.text.toString());
+                            });
+                          },
+                        ))),
                   ],
                 ),
-              ));
+              ),
+              _searchController.text == ''
+                  ? Container()
+                  : Center(
+                      child: Text(
+                        "Results for '" +
+                            _searchController.text.toString() +
+                            "'. " +
+                            _totalData.toString() +
+                            " data found.",
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+              CourseList.isEmpty
+                  ? Center(
+                      child: Container(
+                      margin: EdgeInsets.all(10),
+                      child: Text(
+                        titlecenter,
+                        style: const TextStyle(fontSize: 30),
+                        textAlign: TextAlign.center,
+                      ),
+                    ))
+                  : Column(
+                      children: <Widget>[
+                        ListView.builder(
+                          physics: const NeverScrollableScrollPhysics(),
+                          shrinkWrap: true,
+                          itemCount: CourseList.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            return GestureDetector(
+                              onTap: () => {_loadCourseDetails(index)},
+                              child: SizedBox(
+                                  height: 200,
+                                  child: Card(
+                                    margin: const EdgeInsets.fromLTRB(
+                                        15, 10, 15, 5),
+                                    child: Row(
+                                      children: [
+                                        Flexible(
+                                          flex: 4,
+                                          child: Container(
+                                            margin: const EdgeInsets.fromLTRB(
+                                                0, 0, 5, 0),
+                                            child: CachedNetworkImage(
+                                              imageUrl:
+                                                  "http://10.19.48.148/myTutorAPI/assets/courses/" +
+                                                      CourseList[index]
+                                                          .subject_id
+                                                          .toString() +
+                                                      '.jpg',
+                                              fit: BoxFit.cover,
+                                              placeholder: (context, url) =>
+                                                  const LinearProgressIndicator(),
+                                              errorWidget:
+                                                  (context, url, error) =>
+                                                      const Icon(Icons.error),
+                                            ),
+                                          ),
+                                        ),
+                                        Flexible(
+                                            flex: 6,
+                                            child: Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                Container(
+                                                  margin:
+                                                      const EdgeInsets.all(5),
+                                                  child: Text(
+                                                    CourseList[index]
+                                                        .subject_name
+                                                        .toString(),
+                                                    style: const TextStyle(
+                                                      fontSize: 20,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                    textAlign: TextAlign.center,
+                                                  ),
+                                                ),
+                                                Container(
+                                                  margin:
+                                                      const EdgeInsets.all(8),
+                                                  child: Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
+                                                    children: [
+                                                      Card(
+                                                        color: Colors.green,
+                                                        shape:
+                                                            RoundedRectangleBorder(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(
+                                                                      15.0),
+                                                        ),
+                                                        child: Container(
+                                                          margin:
+                                                              const EdgeInsets
+                                                                  .all(8),
+                                                          child: Text(
+                                                              "RM " +
+                                                                  double.parse(CourseList[
+                                                                              index]
+                                                                          .subject_price
+                                                                          .toString())
+                                                                      .toStringAsFixed(
+                                                                          2),
+                                                              style:
+                                                                  const TextStyle(
+                                                                color: Colors
+                                                                    .white,
+                                                                fontSize: 15,
+                                                              )),
+                                                        ),
+                                                      ),
+                                                      const SizedBox(
+                                                        width: 10,
+                                                      ),
+                                                      Card(
+                                                        color: Colors.blue,
+                                                        shape:
+                                                            RoundedRectangleBorder(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(
+                                                                      15.0),
+                                                        ),
+                                                        child: Container(
+                                                          margin:
+                                                              const EdgeInsets
+                                                                  .all(8),
+                                                          child: Text(
+                                                              CourseList[index]
+                                                                      .subject_sessions
+                                                                      .toString() +
+                                                                  " session",
+                                                              style:
+                                                                  const TextStyle(
+                                                                color: Colors
+                                                                    .white,
+                                                                fontSize: 15,
+                                                              )),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                Container(
+                                                    alignment:
+                                                        Alignment.centerLeft,
+                                                    margin: const EdgeInsets
+                                                        .fromLTRB(20, 5, 5, 5),
+                                                    child: Row(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: [
+                                                        const Icon(Icons.star,
+                                                            color:
+                                                                Colors.amber),
+                                                        Text(
+                                                            CourseList[index]
+                                                                .subject_rating
+                                                                .toString(),
+                                                            style:
+                                                                const TextStyle(
+                                                              color:
+                                                                  Colors.amber,
+                                                              fontSize: 16,
+                                                            )),
+                                                      ],
+                                                    )),
+                                              ],
+                                            ))
+                                      ],
+                                    ),
+                                  )),
+                            );
+                          },
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(10),
+                          child: NumberPaginator(
+                            numberPages: _numPages ?? 1,
+                            onPageChange: (int index) {
+                              setState(() {
+                                _currentPage = index + 1;
+                                loadCourse();
+                                // loadTutor();
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+            ],
+          ),
+        ));
   }
 }

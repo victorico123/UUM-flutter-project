@@ -4,6 +4,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:my_tutor/model/course.dart';
 import 'package:my_tutor/model/tutor.dart';
 import 'package:number_paginator/number_paginator.dart';
 import 'package:http/http.dart' as http;
@@ -17,8 +18,10 @@ class TutorPage extends StatefulWidget {
 
 class _TutorPageState extends State<TutorPage> {
   List<Tutor> TutorList = <Tutor>[];
+  List<Course> CurrrentTutorCourseList = <Course>[];
   var _numPages, _currentPage = 1;
   var titlecenter = "";
+  double courseDetailListHeight = 50;
   @override
   void initState() {
     super.initState();
@@ -26,6 +29,15 @@ class _TutorPageState extends State<TutorPage> {
   }
 
   void _loadTutorDetails(int index) {
+    setState(() {
+      var tutor_id = index + 1;
+      getTutorSubject(tutor_id.toString());
+      _printTutorDetails(index);
+    });
+  }
+
+  Future<void> _printTutorDetails(int index) async {
+    await Future.delayed(const Duration(milliseconds: 200), () {});
     showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -33,109 +45,158 @@ class _TutorPageState extends State<TutorPage> {
             shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.all(Radius.circular(20.0))),
             title: const Text(
-              "Course Details",
+              "Tutor Details",
               style: TextStyle(),
             ),
             content: SingleChildScrollView(
+                physics: const ScrollPhysics(),
                 child: Column(
-              children: [
-                CachedNetworkImage(
-                  imageUrl: "http://10.19.48.148/myTutorAPI/assets/tutors/" +
-                      TutorList[index].tutor_id.toString() +
-                      '.jpg',
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) =>
-                      const LinearProgressIndicator(),
-                  errorWidget: (context, url, error) => const Icon(Icons.error),
-                ),
-                Container(
-                  margin: const EdgeInsets.all(8),
-                  child: Text(
-                    TutorList[index].tutor_name.toString(),
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Card(
-                    color: Colors.grey,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(3.0),
+                  children: [
+                    CachedNetworkImage(
+                      imageUrl:
+                          "http://10.19.48.148/myTutorAPI/assets/tutors/" +
+                              TutorList[index].tutor_id.toString() +
+                              '.jpg',
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) =>
+                          const LinearProgressIndicator(),
+                      errorWidget: (context, url, error) =>
+                          const Icon(Icons.error),
                     ),
-                    child: Container(
+                    Container(
                       margin: const EdgeInsets.all(8),
                       child: Text(
-                          "Tutor Description: \n" +
-                              TutorList[index].tutor_description.toString(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                          )),
-                    ),
-                  ),
-                  Card(
-                    color: Colors.green,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15.0),
-                    ),
-                    child: Container(
-                      margin: const EdgeInsets.all(8),
-                      child: Center(
-                        child: Text(
-                          TutorList[index].tutor_phone.toString(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
+                        TutorList[index].tutor_name.toString(),
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                     ),
-                  ),
-                  Card(
-                    color: Colors.blue,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15.0),
-                    ),
-                    child: Container(
+                    Container(
                       margin: const EdgeInsets.all(8),
-                      child: Center(
-                        child: Text(
-                          TutorList[index].tutor_email.toString(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
+                      child: Text(
+                        "Courses Teach List:",
+                        style: const TextStyle(fontSize: 20),
                       ),
                     ),
-                  ),
-                  Card(
-                    color: Colors.purple,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15.0),
-                    ),
-                    child: Container(
-                      margin: const EdgeInsets.all(8),
-                      child: Center(
-                        child: Text(
-                          "Join Date: " +
-                              TutorList[index]
-                                  .tutor_datereg
-                                  .toString()
-                                  .substring(0, 11),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                          ),
-                          textAlign: TextAlign.center,
+                    Column(
+                      children: <Widget>[
+                        Container(
+                          height:
+                              courseDetailListHeight, // Change as per your requirement
+                          width: 300.0,
+                          child: CurrrentTutorCourseList.length == 0
+                              ? Text('Empty',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                  ))
+                              : ListView.builder(
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  shrinkWrap: true,
+                                  itemCount: CurrrentTutorCourseList.length,
+                                  itemBuilder:
+                                      (BuildContext context, int index) {
+                                    return Container(
+                                      margin: const EdgeInsets.fromLTRB(
+                                          0, 0, 0, 10),
+                                      child: Text(
+                                        CurrrentTutorCourseList[index]
+                                            .subject_name
+                                            .toString(),
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    );
+                                  },
+                                ),
                         ),
-                      ),
+                      ],
                     ),
-                  ),
-                ])
-              ],
-            )),
+                    Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Card(
+                            color: Colors.grey,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(3.0),
+                            ),
+                            child: Container(
+                              margin: const EdgeInsets.all(8),
+                              child: Text(
+                                  "Tutor Description: \n" +
+                                      TutorList[index]
+                                          .tutor_description
+                                          .toString(),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                  )),
+                            ),
+                          ),
+                          Card(
+                            color: Colors.green,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15.0),
+                            ),
+                            child: Container(
+                              margin: const EdgeInsets.all(8),
+                              child: Center(
+                                child: Text(
+                                  TutorList[index].tutor_phone.toString(),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 15,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                          ),
+                          Card(
+                            color: Colors.blue,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15.0),
+                            ),
+                            child: Container(
+                              margin: const EdgeInsets.all(8),
+                              child: Center(
+                                child: Text(
+                                  TutorList[index].tutor_email.toString(),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 15,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                          ),
+                          Card(
+                            color: Colors.purple,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15.0),
+                            ),
+                            child: Container(
+                              margin: const EdgeInsets.all(8),
+                              child: Center(
+                                child: Text(
+                                  "Join Date: " +
+                                      TutorList[index]
+                                          .tutor_datereg
+                                          .toString()
+                                          .substring(0, 11),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 15,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ])
+                  ],
+                )),
             actions: [
               TextButton(
                 child: const Text(
@@ -143,6 +204,7 @@ class _TutorPageState extends State<TutorPage> {
                   style: TextStyle(),
                 ),
                 onPressed: () {
+                  setState(() {});
                   Navigator.of(context).pop();
                 },
               ),
@@ -173,15 +235,49 @@ class _TutorPageState extends State<TutorPage> {
           extractdata['tutors'].forEach((v) {
             TutorList.add(Tutor.fromJson(v));
           });
-          // titlecenter = TutorList.length.toString() + " Tutors Available";
         } else {
           titlecenter = "No Tutor Available";
+          _numPages = 0;
           TutorList.clear();
         }
         setState(() {});
       } else {
-        titlecenter = "No Tutor Available 2";
+        titlecenter = "No Tutor Available";
+        _numPages = 0;
         TutorList.clear();
+        setState(() {});
+      }
+    });
+  }
+
+  void getTutorSubject(String tutorId) {
+    http.post(Uri.parse("http://10.19.48.148/myTutorAPI/load_subject.php"),
+        body: {
+          'tutor_id_chosen': tutorId,
+        }).timeout(
+      const Duration(seconds: 5),
+      onTimeout: () {
+        return http.Response(
+            'Error', 408); // Request Timeout response status code
+      },
+    ).then((response) {
+      var jsondata = jsonDecode(response.body);
+      print(response.body);
+      if (response.statusCode == 200 && jsondata['status'] == 'success') {
+        var extractdata = jsondata['data'];
+
+        if (extractdata['courses'] != null) {
+          CurrrentTutorCourseList = <Course>[];
+          extractdata['courses'].forEach((v) {
+            CurrrentTutorCourseList.add(Course.fromJson(v));
+          });
+          courseDetailListHeight = CurrrentTutorCourseList.length * 50;
+        } else {
+          CurrrentTutorCourseList.clear();
+        }
+        setState(() {});
+      } else {
+        CurrrentTutorCourseList.clear();
         setState(() {});
       }
     });
