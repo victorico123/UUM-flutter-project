@@ -8,6 +8,7 @@ import 'package:my_tutor/model/course.dart';
 import 'package:my_tutor/model/tutor.dart';
 import 'package:number_paginator/number_paginator.dart';
 import 'package:http/http.dart' as http;
+import 'package:my_tutor/global.dart' as gb;
 
 class TutorPage extends StatefulWidget {
   const TutorPage({Key? key}) : super(key: key);
@@ -53,10 +54,10 @@ class _TutorPageState extends State<TutorPage> {
                 child: Column(
                   children: [
                     CachedNetworkImage(
-                      imageUrl:
-                          "http://10.19.48.148/myTutorAPI/assets/tutors/" +
-                              TutorList[index].tutor_id.toString() +
-                              '.jpg',
+                      imageUrl: gb.ip +
+                          "assets/tutors/" +
+                          TutorList[index].tutor_id.toString() +
+                          '.jpg',
                       fit: BoxFit.cover,
                       placeholder: (context, url) =>
                           const LinearProgressIndicator(),
@@ -215,10 +216,9 @@ class _TutorPageState extends State<TutorPage> {
 
   void loadTutor() {
     _numPages ?? 1;
-    http.post(Uri.parse("http://10.19.48.148/myTutorAPI/load_tutor.php"),
-        body: {
-          'page': _currentPage.toString(),
-        }).timeout(
+    http.post(Uri.parse(gb.ip + "load_tutor.php"), body: {
+      'page': _currentPage.toString(),
+    }).timeout(
       const Duration(seconds: 5),
       onTimeout: () {
         return http.Response(
@@ -251,10 +251,9 @@ class _TutorPageState extends State<TutorPage> {
   }
 
   void getTutorSubject(String tutorId) {
-    http.post(Uri.parse("http://10.19.48.148/myTutorAPI/load_subject.php"),
-        body: {
-          'tutor_id_chosen': tutorId,
-        }).timeout(
+    http.post(Uri.parse(gb.ip + "load_subject.php"), body: {
+      'tutor_id_chosen': tutorId,
+    }).timeout(
       const Duration(seconds: 5),
       onTimeout: () {
         return http.Response(
@@ -320,12 +319,12 @@ class _TutorPageState extends State<TutorPage> {
                                         margin: const EdgeInsets.fromLTRB(
                                             0, 0, 5, 0),
                                         child: CachedNetworkImage(
-                                          imageUrl:
-                                              "http://10.19.48.148/myTutorAPI/assets/tutors/" +
-                                                  TutorList[index]
-                                                      .tutor_id
-                                                      .toString() +
-                                                  '.jpg',
+                                          imageUrl: gb.ip +
+                                              "assets/tutors/" +
+                                              TutorList[index]
+                                                  .tutor_id
+                                                  .toString() +
+                                              '.jpg',
                                           fit: BoxFit.cover,
                                           placeholder: (context, url) =>
                                               const LinearProgressIndicator(),

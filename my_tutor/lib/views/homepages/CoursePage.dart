@@ -4,10 +4,13 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:my_tutor/model/course.dart';
 import 'package:my_tutor/model/tutor.dart';
+import 'package:my_tutor/views/cartScreen.dart';
 import 'package:number_paginator/number_paginator.dart';
 import 'package:http/http.dart' as http;
+import 'package:my_tutor/global.dart' as gb;
 
 class CoursePage extends StatefulWidget {
   const CoursePage({Key? key}) : super(key: key);
@@ -51,7 +54,8 @@ class _CoursePageState extends State<CoursePage> {
                 child: Column(
               children: [
                 CachedNetworkImage(
-                  imageUrl: "http://10.19.48.148/myTutorAPI/assets/courses/" +
+                  imageUrl: gb.ip +
+                      "assets/courses/" +
                       CourseList[index].subject_id.toString() +
                       '.jpg',
                   fit: BoxFit.cover,
@@ -179,8 +183,51 @@ class _CoursePageState extends State<CoursePage> {
                 ),
                 onPressed: () {
                   Navigator.of(context).pop();
+                  setState(() {});
                 },
               ),
+              ElevatedButton(
+                  onPressed: () {
+                    _confirmAdd(CourseList[index].subject_id.toString());
+                  },
+                  child: Text("Add to Cart"))
+            ],
+          );
+        });
+  }
+
+  void _confirmAdd(String index) {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(20.0))),
+            title: const Text(
+              "Course Details",
+              style: TextStyle(),
+            ),
+            content: SingleChildScrollView(
+              child: Center(
+                child: Text("Are You sure to add this subject to your cart?"),
+              ),
+            ),
+            actions: [
+              TextButton(
+                child: const Text(
+                  "Cancel",
+                  style: TextStyle(),
+                ),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+              ElevatedButton(
+                  onPressed: () {
+                    addToCart(index);
+                    Navigator.of(context).pop();
+                  },
+                  child: Text("Add"))
             ],
           );
         });
@@ -188,11 +235,10 @@ class _CoursePageState extends State<CoursePage> {
 
   void loadCourse() {
     _numPages ?? 1;
-    http.post(Uri.parse("http://10.19.48.148/myTutorAPI/load_subject.php"),
-        body: {
-          'page': _currentPage.toString(),
-          'search': searchedQuery,
-        }).timeout(
+    http.post(Uri.parse(gb.ip + "load_subject.php"), body: {
+      'page': _currentPage.toString(),
+      'search': searchedQuery,
+    }).timeout(
       const Duration(seconds: 5),
       onTimeout: () {
         return http.Response(
@@ -200,6 +246,7 @@ class _CoursePageState extends State<CoursePage> {
       },
     ).then((response) {
       print(response.body);
+      print(response.statusCode);
       var jsondata = jsonDecode(response.body);
       if (response.statusCode == 200 && jsondata['status'] == 'success') {
         var extractdata = jsondata['data'];
@@ -217,22 +264,20 @@ class _CoursePageState extends State<CoursePage> {
           CourseList.clear();
           _totalData = 0;
         }
-        setState(() {});
       } else {
         titlecenter = "No Course Available";
         _totalData = 0;
         CourseList.clear();
-        setState(() {});
       }
+      setState(() {});
     });
   }
 
   void loadTutor() {
-    http.post(Uri.parse("http://10.19.48.148/myTutorAPI/load_tutor.php"),
-        body: {
-          'page': _currentPage.toString(),
-          'limit': 'all',
-        }).timeout(
+    http.post(Uri.parse(gb.ip + "load_tutor.php"), body: {
+      'page': _currentPage.toString(),
+      'limit': 'all',
+    }).timeout(
       const Duration(seconds: 5),
       onTimeout: () {
         return http.Response(
@@ -259,12 +304,46 @@ class _CoursePageState extends State<CoursePage> {
     });
   }
 
-  void _addTutorDialog() {
-    showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog();
-        });
+  void addToCart(String subjectId) {
+    http.post(Uri.parse(gb.ip + "add_subject_to_cart.php"), body: {
+      'subjectId': subjectId,
+      'userId': gb.globaUser.id.toString(),
+    }).timeout(
+      const Duration(seconds: 5),
+      onTimeout: () {
+        return http.Response(
+            'Error', 408); // Request Timeout response status code
+      },
+    ).then((response) {
+      print(response.body);
+      var jsondata = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        if (jsondata['status'] == 'success') {
+          Fluttertoast.showToast(
+              msg: "Success add to cart",
+              toastLength: Toast.LENGTH_SHORT,
+              gravity: ToastGravity.BOTTOM,
+              timeInSecForIosWeb: 1,
+              fontSize: 16.0);
+        } else {
+          Fluttertoast.showToast(
+              msg: "Item Already Exists",
+              toastLength: Toast.LENGTH_SHORT,
+              gravity: ToastGravity.BOTTOM,
+              timeInSecForIosWeb: 1,
+              fontSize: 16.0);
+        }
+      } else {
+        Fluttertoast.showToast(
+            msg: "Failed add to cart",
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            timeInSecForIosWeb: 1,
+            fontSize: 16.0);
+      }
+      Navigator.of(context).pop();
+      setState(() {});
+    });
   }
 
   @override
@@ -272,14 +351,15 @@ class _CoursePageState extends State<CoursePage> {
     return Scaffold(
         appBar: AppBar(
             title: const Text('Course'),
-            // actions: [
-            //   IconButton(
-            //     icon: const Icon(Icons.add),
-            //     onPressed: () {
-            //       setState(() {});
-            //     },
-            //   )
-            // ],
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.shopping_cart),
+                onPressed: () {
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => CartScreen()));
+                },
+              )
+            ],
             centerTitle: true,
             automaticallyImplyLeading: false),
         body: SingleChildScrollView(
@@ -369,12 +449,12 @@ class _CoursePageState extends State<CoursePage> {
                                             margin: const EdgeInsets.fromLTRB(
                                                 0, 0, 5, 0),
                                             child: CachedNetworkImage(
-                                              imageUrl:
-                                                  "http://10.19.48.148/myTutorAPI/assets/courses/" +
-                                                      CourseList[index]
-                                                          .subject_id
-                                                          .toString() +
-                                                      '.jpg',
+                                              imageUrl: gb.ip +
+                                                  "assets/courses/" +
+                                                  CourseList[index]
+                                                      .subject_id
+                                                      .toString() +
+                                                  '.jpg',
                                               fit: BoxFit.cover,
                                               placeholder: (context, url) =>
                                                   const LinearProgressIndicator(),

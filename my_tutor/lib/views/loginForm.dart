@@ -154,7 +154,7 @@ class _LoginFormState extends State<LoginForm> {
   void _validateUser() {
     String email = _emailController.text;
     String password = _passwordController.text;
-    http.post(Uri.parse("http://10.19.48.148/myTutorAPI/login.php"),
+    http.post(Uri.parse(gb.ip + "login.php"),
         body: {"email": email, "password": password}).then((response) {
       var data = jsonDecode(response.body);
       if (response.statusCode == 200 && data['status'] == 'success') {

@@ -1,3 +1,13 @@
+<?php
+include("dbconnect.php");
+session_start();
+if (!isset($_POST)) {
+    $response = array('status' => 'failed', 'data' => null);
+    sendJsonResponse($response);
+    die();
+}
+
+
 $limit = 5;
 $page = (isset($_POST['page']) && is_numeric($_POST['page'])) ? $_POST['page'] : 1;
 $paginationStart = ($page - 1) * $limit;
@@ -58,3 +68,11 @@ if ($allRecrods > 0) {
     }
     sendJsonResponse($response);
 }
+
+
+function sendJsonResponse($sentArray)
+{
+    header('Content-Type: application/json');
+    echo json_encode($sentArray);
+}
+?>

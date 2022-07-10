@@ -1,8 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:my_tutor/views/HomeScreen.dart';
 import 'package:my_tutor/views/landingForm.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 void main() {
+  HttpOverrides.global = MyHttpOverrides();
   runApp(const MyApp());
 }
 
@@ -32,6 +36,9 @@ class _MainSplashScreenState extends State<MainSplashScreen> {
       setState(() {});
       // Navigator.of(context).push(LandingFormRoute());
       Navigator.push(context, FadeRoute(page: const LandingForm()));
+
+      // Navigator.of(context)
+      //     .push(MaterialPageRoute(builder: (context) => HomeScreen()));
     });
 
     super.initState();
@@ -103,4 +110,13 @@ class FadeRoute extends PageRouteBuilder {
             child: child,
           ),
         );
+}
+
+class MyHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createdHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+  }
 }
